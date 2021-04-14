@@ -16,10 +16,15 @@ from io import open
 from notebook.base.handlers import IPythonHandler
 from notebook.utils import url_path_join
 
+from jupyterlab_templates.s3 import S3TemplateLoader
+
 
 class TemplatesLoader:
     def __init__(self, template_dirs):
         self.template_dirs = template_dirs
+
+    def get_paths(self):
+        return self.template_dirs
 
     def get_templates(self):
         templates = {}
@@ -66,8 +71,18 @@ class TemplatesLoader:
 
                 # full data
                 template_by_path[data["name"]] = data
-
         return templates, template_by_path
+
+
+LOADER_REGISTRY = {
+    "default": TemplatesLoader,
+    None: TemplatesLoader,
+    "s3": S3TemplateLoader
+}
+
+
+def get_loader(key, *args, **kwargs):
+    return LOADER_REGISTRY[key](*args, **kwargs)
 
 
 class TemplatesHandler(IPythonHandler):
@@ -99,12 +114,21 @@ def load_jupyter_server_extension(nb_server_app):
     Args:
         nb_server_app (NotebookWebApplication): handle to the Notebook webserver instance.
     """
+    extension_config = nb_server_app.config.get("JupyterLabTemplates", {})
+
     web_app = nb_server_app.web_app
-    template_dirs = nb_server_app.config.get("JupyterLabTemplates", {}).get(
+
+    # For backwards compatability keep this
+    template_dirs = extension_config.get(
         "template_dirs", []
     )
 
-    if nb_server_app.config.get("JupyterLabTemplates", {}).get("include_default", True):
+    loader_name = extension_config.get("loader", "default")
+    loader_kwargs = extension_config.get("loader_kwargs", {})
+    loader = get_loader(loader_name, template_dirs=template_dirs, **loader_kwargs)
+    template_dirs.extend([d for d in loader.get_paths() if d not in template_dirs])
+
+    if extension_config.get("include_default", True):
         template_dirs.insert(0, os.path.join(os.path.dirname(__file__), "templates"))
 
     base_url = web_app.settings["base_url"]
@@ -115,7 +139,7 @@ def load_jupyter_server_extension(nb_server_app):
         % url_path_join(base_url, "templates")
     )
 
-    if nb_server_app.config.get("JupyterLabTemplates", {}).get(
+    if extension_config.get(
         "include_core_paths", True
     ):
         template_dirs.extend(
@@ -126,7 +150,6 @@ def load_jupyter_server_extension(nb_server_app):
         )
     print("Search paths:\n\t%s" % "\n\t".join(template_dirs))
 
-    loader = TemplatesLoader(template_dirs)
     print(
         "Available templates:\n\t%s"
         % "\n\t".join(t for t in loader.get_templates()[1].keys())

@@ -26,13 +26,16 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 requires = ["jupyterlab>=3.0.0"]
 
 dev_requires = requires + [
+    "awscli",
     "black>=20.",
+    "boto3",
     "bump2version>=1.0.0",
     "flake8>=3.7.8",
     "flake8-black>=0.2.1",
     "mock",
     "pytest",
     "pytest-cov>=2.6.1",
+    "requests",
     "Sphinx>=1.8.4",
     "sphinx-markdown-builder>=0.5.2",
 ]
