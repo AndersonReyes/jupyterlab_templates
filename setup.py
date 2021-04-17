@@ -23,7 +23,7 @@ version = get_version(pjoin(here, name, "_version.py"))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read().replace("\r\n", "\n")
 
-requires = ["jupyterlab>=3.0.0"]
+requires = ["jupyterlab>=3.0.0", "PyGithub"]
 
 dev_requires = requires + [
     "black>=20.",
