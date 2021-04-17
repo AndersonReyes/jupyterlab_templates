@@ -4,11 +4,11 @@ import os
 import requests
 
 
-def test_server_loaded_notebooks():
+def test_server_loaded_notebooks(notebook_server):
     name = "/example-jupyter-notebooks.git/01-MPI-monte-carlo-pi.ipynb"
 
     resp = requests.get(
-        "http://127.0.0.1:8888/templates/names",
+        "{}/templates/names".format(notebook_server),
     )
     assert resp.status_code == 200, resp.content
     assert resp.json() == {
@@ -16,7 +16,7 @@ def test_server_loaded_notebooks():
     }
 
     resp2 = requests.get(
-        "http://127.0.0.1:8888/templates/get", params={"template": name}
+        "{}/templates/get".format(notebook_server), params={"template": name}
     )
     assert resp2.status_code == 200, resp.content
     data = resp2.json()
