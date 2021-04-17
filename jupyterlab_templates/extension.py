@@ -16,16 +16,27 @@ from io import open
 from notebook.base.handlers import IPythonHandler
 from notebook.utils import url_path_join
 
+from jupyterlab_templates import git_utils
+
 
 class TemplatesLoader:
     def __init__(self, template_dirs):
         self.template_dirs = template_dirs
+
+    def is_git_repo(self, path):
+        if not os.path.exists(os.path.join(path, ".git")):
+            return False
+        return True
 
     def get_templates(self):
         templates = {}
         template_by_path = {}
 
         for path in self.template_dirs:
+
+            if self.is_git_repo(path):
+                git_utils.update(path)
+
             # in order to produce correct filenames, abspath should point to the parent directory of path
             abspath = os.path.abspath(os.path.join(os.path.realpath(path), os.pardir))
             files = []
@@ -103,6 +114,16 @@ def load_jupyter_server_extension(nb_server_app):
     template_dirs = nb_server_app.config.get("JupyterLabTemplates", {}).get(
         "template_dirs", []
     )
+    git_repos = nb_server_app.config.get("JupyterLabTemplates", {}).get(
+        "git_repos", {}
+    )
+
+    git_parent_dir = os.path.join(os.path.dirname(__file__), "git-templates")
+    for repo, branch in git_repos.items():
+        git_utils.clone_if_not_exists(repo, git_parent_dir, branch)
+
+    if git_repos:
+        template_dirs.append(git_parent_dir)
 
     if nb_server_app.config.get("JupyterLabTemplates", {}).get("include_default", True):
         template_dirs.insert(0, os.path.join(os.path.dirname(__file__), "templates"))
