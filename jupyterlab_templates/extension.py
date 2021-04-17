@@ -114,9 +114,7 @@ def load_jupyter_server_extension(nb_server_app):
     template_dirs = nb_server_app.config.get("JupyterLabTemplates", {}).get(
         "template_dirs", []
     )
-    git_repos = nb_server_app.config.get("JupyterLabTemplates", {}).get(
-        "git_repos", {}
-    )
+    git_repos = nb_server_app.config.get("JupyterLabTemplates", {}).get("git_repos", {})
 
     git_parent_dir = os.path.join(os.path.dirname(__file__), "git-templates")
     for repo, branch in git_repos.items():

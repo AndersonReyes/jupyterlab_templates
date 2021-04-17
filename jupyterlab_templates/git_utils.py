@@ -5,7 +5,19 @@ from github import Github
 
 
 TOKEN = os.getenv("GITHUB_TOKEN")
-g = Github(TOKEN)
+g = None
+
+
+def get_client():
+    global g
+
+    if not g:
+        if not TOKEN:
+            print(
+                "WARNING: ${GITHUB_TOKEN} not set.This might be required for private repos"
+            )
+            g = Github(TOKEN)
+    return g
 
 
 def clone(url, outdir, branch=""):
@@ -24,7 +36,7 @@ def update(outdir):
 
 
 def clone_if_not_exists(repo_name, outdir="", branch=""):
-    repo = g.get_repo(repo_name)
+    repo = get_client().get_repo(repo_name)
     local_dirname = os.path.basename(repo.ssh_url)
     out = os.path.join(outdir, local_dirname)
 
